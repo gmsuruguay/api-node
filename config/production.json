@@ -1,0 +1,6 @@
+{
+    "name":"API REST EXPRESS - PRODUCTION",
+    "condigDB":{
+        "host":"prod-db-server"
+    }
+}
