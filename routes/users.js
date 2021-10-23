@@ -1,90 +1,156 @@
 const express = require('express');
 const Joi = require('joi');
+const User = require('../models/user_model');
 const route = express.Router();
 
-const users = [
-    {id: 1,nombre:'Martin'},
-    {id: 2,nombre:'Carlos'},
-    {id: 3,nombre:'Morena'},
-    {id: 4,nombre:'Leila'},
-]
+route.get('/:email',(req,resp)=>{
 
-route.get('/:id',(req,resp)=>{
-
-    let user = users.find(record => record.id === parseInt(req.params.id))
-
-    if (!user) {
-        resp.status(404).send('El usuario no existe')
-    }
-    resp.send(user)
+    let result = list(req.params.email)
+    result
+    .then(user =>{
+        resp.status(200).json({
+            status : '200',
+            data : user
+        })
+    })
+    .catch(err =>{
+        resp.status(400).json({
+            status : '400',
+            message : err
+        })
+    })
 })
 
 route.get('/',(req,resp)=>{    
-    resp.send(users)
+    let result = list()
+    result
+    .then(users =>{
+        resp.status(200).json({
+            status : '200',
+            data : users
+        })
+    })
+    .catch(err =>{
+        resp.status(400).json({
+            status : '400',
+            message : err
+        })
+    })
 })
 
 route.post('/',(req,resp)=>{
 
     const schema = Joi.object({
-        nombre: Joi.string().min(3).required()
+        name: Joi.string().min(3).required(),
+        email: Joi.string().email().required(),
+        password : Joi.string().min(6).required(),
     });
 
-    const {error, value} = schema.validate({ nombre: req.body.nombre })
+    /* const {error, value} = schema.validate({})
 
-    if (!error) {
+    if (!error) { */
 
-        let user = {
-            id: users.length + 1,
-            nombre: value.nombre
-        }
-    
-        users.push(user)
-        resp.send(user)
+        const result = create(req.body)
+        result
+        .then(user =>{
+            resp.status(201).json({
+                status : '201',
+                data : user
+            })       
+        })
+        .catch(err=>{
+            resp.status(400).json({
+                status : '400',
+                message : err
+            })
+        })
         
-    } else {
-        resp.status(400).send(error.details[0].message)
-    }
+    /* } else {
+        resp.status(400).send({
+            status : '400',
+            message : error
+        })
+    } */
     
 })
 
-route.put('/:id',(req,resp)=>{
+route.put('/:email',(req,resp)=>{
 
-    let user = users.find(record => record.id === parseInt(req.params.id))
+    let result = update(req.params.email, req.body)
 
-    if (!user) {
-        resp.status(404).send('El usuario no existe')
-    }
-
-    const schema = Joi.object({
-        nombre: Joi.string().min(3).required()
-    });
-
-    const {error, value} = schema.validate({ nombre: req.body.nombre })
-
-    if (error) {       
-        resp.status(400).send(error.details[0].message)
-        return
-    } else {
-        user.nombre = value.nombre
-        resp.status(200).send(user)
-    }
+    result
+    .then(user =>{
+        resp.status(200).json({
+            status : '200',
+            data : user
+        })       
+    })
+    .catch(err=>{
+        resp.status(400).json({
+            status : '400',
+            message : err
+        })
+    })
+   
     
 })
 
-route.delete('/:id',(req,resp)=>{
+route.delete('/:email',(req,resp)=>{
 
-    let user = users.find(record => record.id === parseInt(req.params.id))
+    let result = deactivate(req.params.email)
 
-    if (!user) {
-        resp.status(404).send('El usuario no existe')
-        return
-    }
-
-    let index = users.indexOf(user)
-    users.splice(index,1)
-    resp.send(user)
-    
-    
+    result
+    .then(user =>{
+        resp.status(200).json({
+            status : '200',
+            data : user
+        })       
+    })
+    .catch(err=>{
+        resp.status(400).json({
+            status : '400',
+            message : err
+        })
+    })
+   
 })
+
+const create = async (body) =>{
+    const user = new User({
+        name : body.name,
+        email : body.email,
+        password: body.password        
+    })
+    
+    return await user.save()
+}
+
+const update = async (email,body) =>{
+    let user = await User.findOneAndUpdate(email, {
+        $set:{
+            name : body.name,
+            password : body.password
+        }
+    },{new : true})
+
+    return user
+}
+
+const deactivate = async (email) =>{
+    let user = await User.findOneAndUpdate(email, {
+        $set:{
+            status : false          
+        }
+    },{new : true})
+
+    return user
+}
+
+const list = async (email = null) => { 
+    if (email == null) {        
+        return result = await User.find({status:true})
+    }    
+    return result = await User.findOne({email:email})  
+}
 
 module.exports = route
