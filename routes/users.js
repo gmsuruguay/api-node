@@ -142,7 +142,7 @@ const create = async (body) =>{
 }
 
 const update = async (email,body) =>{
-    let user = await User.findOneAndUpdate(email, {
+    let user = await User.findOneAndUpdate({email}, {
         $set:{
             name : body.name,
             password : body.password
@@ -153,7 +153,7 @@ const update = async (email,body) =>{
 }
 
 const deactivate = async (email) =>{
-    let user = await User.findOneAndUpdate(email, {
+    let user = await User.findOneAndUpdate({email}, {
         $set:{
             status : false          
         }
