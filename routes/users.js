@@ -3,12 +3,6 @@ const Joi = require('joi');
 const User = require('../models/user_model');
 const route = express.Router();
 
-const schema = Joi.object({
-    name: Joi.string().min(3).required(),
-    email: Joi.string().email().required(),
-    password : Joi.string().min(6).required(),
-});
-
 route.get('/:email',(req,resp)=>{
 
     let result = list(req.params.email)
@@ -46,6 +40,12 @@ route.get('/',(req,resp)=>{
 
 route.post('/',(req,resp)=>{   
 
+    const schema = Joi.object({
+        name: Joi.string().min(3).required(),
+        email: Joi.string().email().required(),
+        password : Joi.string().min(6).required(),
+    });
+
     const {error, value} = schema.validate({name: req.body.name, email: req.body.email, password: req.body.password })
 
     if (!error) {
@@ -75,22 +75,38 @@ route.post('/',(req,resp)=>{
 })
 
 route.put('/:email',(req,resp)=>{
+    
+    const schema = Joi.object({
+        name: Joi.string().min(3),   
+        password : Joi.string().min(6),
+    });
 
-    let result = update(req.params.email, req.body)
+    const {error, value} = schema.validate({name: req.body.name, password: req.body.password})
 
-    result
-    .then(user =>{
-        resp.status(200).json({
-            status : '200',
-            data : user
-        })       
-    })
-    .catch(err=>{
-        resp.status(400).json({
-            status : '400',
-            message : err
+    if (!error) {
+
+        let result = update(req.params.email, req.body)
+
+        result
+        .then(user =>{
+            resp.status(200).json({
+                status : '200',
+                data : user
+            })       
         })
-    })
+        .catch(err=>{
+            resp.status(400).json({
+                status : '400',
+                message : err
+            })
+        })
+
+    } else {
+        resp.status(400).send({
+            status : '400',
+            message : error
+        })
+    }
    
     
 })
