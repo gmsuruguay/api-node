@@ -3,6 +3,12 @@ const Joi = require('joi');
 const User = require('../models/user_model');
 const route = express.Router();
 
+const schema = Joi.object({
+    name: Joi.string().min(3).required(),
+    email: Joi.string().email().required(),
+    password : Joi.string().min(6).required(),
+});
+
 route.get('/:email',(req,resp)=>{
 
     let result = list(req.params.email)
@@ -38,17 +44,11 @@ route.get('/',(req,resp)=>{
     })
 })
 
-route.post('/',(req,resp)=>{
+route.post('/',(req,resp)=>{   
 
-    const schema = Joi.object({
-        name: Joi.string().min(3).required(),
-        email: Joi.string().email().required(),
-        password : Joi.string().min(6).required(),
-    });
+    const {error, value} = schema.validate({name: req.body.name, email: req.body.email, password: req.body.password })
 
-    /* const {error, value} = schema.validate({})
-
-    if (!error) { */
+    if (!error) {
 
         const result = create(req.body)
         result
@@ -65,12 +65,12 @@ route.post('/',(req,resp)=>{
             })
         })
         
-    /* } else {
+    } else {
         resp.status(400).send({
             status : '400',
             message : error
         })
-    } */
+    }
     
 })
 
